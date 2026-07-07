@@ -1,0 +1,64 @@
+# Recipe: GLM-5.2-Int4-Int8Mix (4-node)
+# QuantTrio GLM 5.2 mixed INT4/INT8, TP=4 and DCP=4 across 4 DGX Spark nodes.
+# Uses the custom vLLM overlay with B12X sparse MLA and DCP shard-draft support.
+
+recipe_version: "1"
+name: GLM-5.2-Int4-Int8Mix-4Node
+description: vLLM serving QuantTrio GLM-5.2-Int4-Int8Mix with TP=4 and DCP=4 across 4 DGX Spark nodes
+
+# HuggingFace model to download (optional, for --download-model)
+model: QuantTrio/GLM-5.2-Int4-Int8Mix
+
+# Container image to use
+container: vllm-zatz-dcp:probe
+
+# Can only be run in a cluster
+cluster_only: true
+
+mods:
+  - mods/drop-caches
+
+env:
+  CUTE_DSL_ARCH: "sm_121a" # GB10 requires sm_121a; sm_120a causes error 209
+  VLLM_USE_V2_MODEL_RUNNER: "1"
+  VLLM_USE_B12X_SPARSE_INDEXER: "1"
+  VLLM_DCP_SHARD_DRAFT: "1"
+  NCCL_MAX_NCHANNELS: "4"
+  NCCL_MIN_NCHANNELS: "4"
+  CUDA_DEVICE_MAX_CONNECTIONS: "32"
+  TORCH_CUDA_ARCH_LIST: "12.1a"
+  VLLM_ALLOW_LONG_MAX_MODEL_LEN: "1"
+
+defaults:
+  port: 8000
+  host: 0.0.0.0
+  tensor_parallel: 4
+  gpu_memory_utilization: 0.88
+  max_model_len: 655360
+  max_num_seqs: 4
+  max_num_batched_tokens: 4096
+
+command: |
+  vllm serve QuantTrio/GLM-5.2-Int4-Int8Mix \
+    --host {host} \
+    --port {port} \
+    --quantization compressed-tensors \
+    --tensor-parallel-size {tensor_parallel} \
+    --decode-context-parallel-size 4 \
+    --dcp-comm-backend ag_rs \
+    --attention-backend B12X_MLA_SPARSE \
+    --kv-cache-dtype fp8_ds_mla \
+    --kv-cache-memory-bytes 9000000000 \
+    --max-model-len {max_model_len} \
+    --max-num-batched-tokens {max_num_batched_tokens} \
+    --max-num-seqs {max_num_seqs} \
+    -cc.cudagraph_mode=FULL_AND_PIECEWISE \
+    -cc.custom_ops='["all"]' \
+    --max-cudagraph-capture-size 32 \
+    --long-prefill-token-threshold 2048 \
+    --gpu-memory-utilization {gpu_memory_utilization} \
+    --reasoning-parser glm45 \
+    --tool-call-parser glm47 \
+    --enable-auto-tool-choice \
+    --speculative-config '{"method":"mtp","num_speculative_tokens":3}' \
+    --hf-overrides '{"index_topk_pattern":"FFFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSS"}'
