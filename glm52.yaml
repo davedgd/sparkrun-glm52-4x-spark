@@ -2,7 +2,7 @@
 # QuantTrio GLM 5.2 mixed INT4/INT8, TP=4 and DCP=4 across 4 DGX Spark nodes.
 # Uses the custom vLLM overlay with B12X sparse MLA and DCP shard-draft support.
 
-recipe_version: "1"
+recipe_version: "2"
 name: GLM-5.2-Int4-Int8Mix-4Node
 description: vLLM serving QuantTrio GLM-5.2-Int4-Int8Mix with TP=4 and DCP=4 across 4 DGX Spark nodes
 
@@ -47,6 +47,9 @@ command: |
     --decode-context-parallel-size 4 \
     --dcp-comm-backend ag_rs \
     --attention-backend B12X_MLA_SPARSE \
+    --speculative-config '{"method":"mtp","num_speculative_tokens":4}' \
+    --max-num-partial-prefills 1 \
+    --max-long-partial-prefills 1 \
     --kv-cache-dtype fp8_ds_mla \
     --kv-cache-memory-bytes 9000000000 \
     --max-model-len {max_model_len} \
@@ -55,10 +58,9 @@ command: |
     -cc.cudagraph_mode=FULL_AND_PIECEWISE \
     -cc.custom_ops='["all"]' \
     --max-cudagraph-capture-size 32 \
-    --long-prefill-token-threshold 2048 \
+    --long-prefill-token-threshold 65536 \
     --gpu-memory-utilization {gpu_memory_utilization} \
     --reasoning-parser glm45 \
     --tool-call-parser glm47 \
     --enable-auto-tool-choice \
-    --speculative-config '{"method":"mtp","num_speculative_tokens":3}' \
     --hf-overrides '{"index_topk_pattern":"FFFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSS"}'
