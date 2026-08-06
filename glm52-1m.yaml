@@ -33,7 +33,7 @@ defaults:
   port: 8000
   host: 0.0.0.0
   tensor_parallel: 4
-  gpu_memory_utilization: 0.92
+  gpu_memory_utilization: 0.90
   max_model_len: 1048576
   max_num_seqs: 4
   max_num_batched_tokens: 4096
@@ -55,7 +55,8 @@ command: |
     --max-model-len {max_model_len} \
     --max-num-batched-tokens {max_num_batched_tokens} \
     --max-num-seqs {max_num_seqs} \
-    -cc.cudagraph_mode=PIECEWISE \
+    --no-async-scheduling \
+    -cc.cudagraph_mode=FULL_DECODE_ONLY \
     -cc.custom_ops='["all"]' \
     --max-cudagraph-capture-size 32 \
     --long-prefill-token-threshold 65536 \
