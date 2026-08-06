@@ -10,6 +10,8 @@ Run in sparkrun via:
 
 `sparkrun run glm52`
 
+The above recipe has 655K context. Alternatively, for 1M context, use the `glm52-1m.yaml` script in its place (work-in-progress).
+
 ### To-Do
 
 There are occasional lockups that occur with this build on rare occasions (two times over the course of the past several weeks). I believe they are related to the following issue outlined [here](https://github.com/marksunner/glm52-dgx-spark-deadlock-evidence) -- the next iteration of this image will attempt to resolve this type of hang.
