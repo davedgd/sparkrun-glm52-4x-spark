@@ -1,11 +1,11 @@
-# Recipe: GLM-5.2-Int4-Int8Mix-1M (4-node)
-# QuantTrio GLM-5.2 mixed INT4/INT8, TP=4 and DCP=4 across 4 DGX Spark nodes at 1M context.
+# Recipe: GLM-5.2-Int4-Int8Mix-1M-Vision (4-node)
+# QuantTrio GLM-5.2 mixed INT4/INT8, TP=4 and DCP=4 across 4 DGX Spark nodes at 1M context, with vision added.
 
 recipe_version: "1"
-name: GLM-5.2-Int4-Int8Mix-4Node-1M
-description: vLLM serving QuantTrio GLM-5.2-Int4-Int8Mix with TP=4 and DCP=4 across 4 DGX Spark nodes at 1M context
+name: GLM-5.2-Int4-Int8Mix-4Node-1M-Vision
+description: vLLM serving QuantTrio GLM-5.2-Int4-Int8Mix with TP=4 and DCP=4 across 4 DGX Spark nodes at 1M context with vision added
 
-# HuggingFace model to download (optional, for --download-model)
+# The assembled model is prepared separately, not downloaded by run-recipe (see defaults below).
 model: QuantTrio/GLM-5.2-Int4-Int8Mix
 
 # Container image to use
@@ -70,9 +70,12 @@ defaults:
   max_num_seqs: 5
   max_num_batched_tokens: 4096
 
+  composite_model_path: /cache/huggingface/glm52-quanttrio-vision
+  text_model_path: /cache/huggingface/hub/models--QuantTrio--GLM-5.2-Int4-Int8Mix/snapshots/1d3bcfe5ec549ecd000fd80b37f191183842e983
+
 command: |
-  vllm serve {model} \
-    --served-model-name QuantTrio/GLM-5.2-Int4-Int8Mix \
+  vllm serve {composite_model_path} \
+    --served-model-name QuantTrio/GLM-5.2-Int4-Int8Mix QuantTrio/GLM-5.2-Int4-Int8Mix-Vision \
     --host {host} \
     --port {port} \
     --trust-remote-code \
@@ -81,7 +84,7 @@ command: |
     --decode-context-parallel-size 4 \
     --dcp-comm-backend ag_rs \
     --attention-backend B12X_MLA_SPARSE \
-    --speculative-config '{"method":"mtp","num_speculative_tokens":5,"draft_attention_backend":"B12X_MLA_SPARSE","quantization":"compressed-tensors","adaptive_speculative_tokens_window":32}' \
+    --speculative-config '{"model": "/cache/huggingface/hub/models--QuantTrio--GLM-5.2-Int4-Int8Mix/snapshots/1d3bcfe5ec549ecd000fd80b37f191183842e983", "method":"mtp","num_speculative_tokens":5,"draft_attention_backend":"B12X_MLA_SPARSE","quantization":"compressed-tensors","adaptive_speculative_tokens_window":32}' \
     --kv-cache-dtype fp8_ds_mla \
     --kv-cache-memory-bytes 14400000000 \
     --max-model-len {max_model_len} \
@@ -102,4 +105,7 @@ command: |
     --reasoning-parser glm45 \
     --tool-call-parser glm47 \
     --enable-auto-tool-choice \
-    --hf-overrides '{"index_topk_pattern":"FFFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSS"}'
+    --hf-overrides '{"index_topk_pattern":"FFFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSSFSSS"}' \
+    --limit-mm-per-prompt '{{"image":3,"video":0}}' \
+    --mm-processor-cache-gb 0 \
+    --mm-encoder-tp-mode weights
