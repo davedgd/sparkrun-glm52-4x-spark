@@ -67,4 +67,4 @@ sparkrun run glm52-vision
 
 ## Acknowledgements
 
-Thank you to [ciprianveg](https://forums.developer.nvidia.com/u/ciprianveg), [CosmicRaisins](https://forums.developer.nvidia.com/u/CosmicRaisins), [Zatz](https://forums.developer.nvidia.com/u/zatz), and [tonyd615](https://forums.developer.nvidia.com/u/tonyd615)!
+Thank you to [ciprianveg](https://forums.developer.nvidia.com/u/ciprianveg), [CosmicRaisins](https://github.com/CosmicRaisins), [Zatz](https://forums.developer.nvidia.com/u/zatz), and [tonyd615](https://forums.developer.nvidia.com/u/tonyd615)!
